@@ -6,6 +6,19 @@ import (
 	"strings"
 )
 
+// Validator is a function type used to define rules for validating usernames.
+// Each Validator function takes a username as input and returns:
+//   - A boolean indicating whether the validation passed.
+//   - An error providing details if the validation fails.
+//
+// Example:
+//
+//	func MinLengthValidator(username string) (bool, error) {
+//	    if len(username) < 5 {
+//	        return false, errors.New("username must be at least 5 characters")
+//	    }
+//	    return true, nil
+//	}
 type Validator func(string) (bool, error)
 
 // Validate checks if the username in the Identity object is valid
@@ -66,6 +79,15 @@ func (u *Identity) WithValidator(validators ...Validator) *Identity {
 	return u
 }
 
+// isValid checks if the provided suggestion is valid.
+// A suggestion is considered valid if it passes all validators
+// and is not symmetric to the current username.
+//
+// If no validators are set, it applies the default validators.
+//
+// Returns:
+//   - true if the suggestion is valid.
+//   - false otherwise.
 func (u *Identity) isValid(suggestion string) bool {
 	if len(u.validator) <= 0 {
 		u.validator = defaultValidator()
@@ -79,10 +101,23 @@ func (u *Identity) isValid(suggestion string) bool {
 	return true
 }
 
+// isSymmetric checks if the given suggestion is the same
+// as the current username. This ensures that suggestions
+// are not identical to the original username.
+//
+// Returns:
+//   - true if the suggestion is symmetric to the current username.
+//   - false otherwise.
 func (u *Identity) isSymmetric(suggestion string) bool {
 	return u.uname == suggestion
 }
 
+// validateRange checks if the input username meets the length requirements.
+// A valid username must be between 5 and 30 characters.
+//
+// Returns:
+//   - true if the username is within the valid length range.
+//   - false and an error message otherwise.
 func validateRange(input string) (bool, error) {
 	// Check if the username is empty
 	if input == "" {
@@ -97,7 +132,13 @@ func validateRange(input string) (bool, error) {
 	return true, nil
 }
 
-// Check if the username matches the format
+// validateFormat ensures that the input username follows the allowed format.
+// Valid usernames can only contain letters, numbers, and one period ('.').
+// Usernames cannot start or end with a period.
+//
+// Returns:
+//   - true if the username matches the allowed format.
+//   - false and an error message otherwise.
 func validateFormat(input string) (bool, error) {
 	var err = "usernames can only contain letters, numbers, and period"
 	const dotChar = '.'
@@ -130,7 +171,13 @@ func validateFormat(input string) (bool, error) {
 	return true, nil
 }
 
-// Check if the username is secure and not easy to guess
+// validateIntegrity ensures that the username is not weak or common.
+// It checks the username against a built-in blacklist of common or
+// insecure usernames.
+//
+// Returns:
+//   - true if the username is not in the blacklist.
+//   - false and an error message otherwise.
 func validateIntegrity(str string) (bool, error) {
 	err := "username is too weak or common, please choose a different one"
 	str = strings.ToLower(str)
@@ -142,6 +189,14 @@ func validateIntegrity(str string) (bool, error) {
 	return true, nil
 }
 
+// defaultValidator provides a default set of validators for username validation.
+// These include:
+//   - validateRange: Ensures the username length is valid.
+//   - validateFormat: Ensures the username follows the correct format.
+//   - validateIntegrity: Ensures the username is secure and not common.
+//
+// Returns:
+//   - A slice of Validator functions representing the default validation rules.
 func defaultValidator() []Validator {
 	return []Validator{
 		validateRange,

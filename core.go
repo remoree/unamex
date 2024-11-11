@@ -1,11 +1,48 @@
+// Package unamex offers flexible and efficient tools for username validation
+// and suggestion generation. It ensures usernames adhere to configurable
+// rules, such as length and format, while preventing weak or common choices.
+//
+// The package also provides highly customizable suggestion strategies,
+// allowing developers to generate alternative usernames based on specific
+// requirements or patterns.
+//
+// Example usage:
+//
+//	u := unamex.New("exampleUser")
+//	if err := u.Validate(); err != nil {
+//		fmt.Println("Invalid username:", err)
+//		fmt.Println("Suggestions:", u.Suggest(5))
+//	}
 package unamex
 
+// Identity represents the core structure for username validation
+// and suggestion. It provides mechanisms to validate usernames
+// against custom rules and generate alternative suggestions.
 type Identity struct {
-	uname     string
+	// uname is the username being validated or used for suggestions.
+	uname string
+
+	// validator is a slice of Validator functions used to validate
+	// the username. These functions define the rules for a valid
+	// username, such as length, format, etc.
 	validator []Validator
+
+	// suggestor is a slice of Suggestor functions used to generate
+	// alternative username suggestions. These functions define
+	// the strategies for creating suggestions, such as adding prefixes
+	// or modifying vowels.
 	suggestor []Suggestor
 }
 
+// Suggestor is a function type used to define strategies
+// for generating username suggestions. Each Suggestor function
+// takes a username as input and returns a modified or alternative username.
+//
+// Example:
+//
+//	func AddSuffix(username string) string {
+//	    return username + "_123"
+//	}
 type Suggestor func(s string) string
 
 // New creates a new Identity instance with default validator and suggestors.
@@ -103,6 +140,9 @@ func (u *Identity) Suggest(capacity int, suggestors ...Suggestor) []string {
 	return suggestions
 }
 
+// defaultSuggestors returns a slice of default Suggestor functions.
+// Each Suggestor implements a unique strategy to generate alternative
+// usernames by modifying the input username in various ways.
 func defaultSuggestors() []Suggestor {
 	var suggestors = []Suggestor{
 		func(s string) string { return SetPrefixRandomDigit(s) },
