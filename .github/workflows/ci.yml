@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout Code
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Step 2: Manually Install Go
+    - name: Install Go Manually
+      run: |
+        sudo rm -rf /usr/local/go
+        curl -OL https://golang.org/dl/go1.20.10.linux-amd64.tar.gz
+        sudo tar -C /usr/local -xzf go1.20.10.linux-amd64.tar.gz
+        export PATH="/usr/local/go/bin:$PATH"
+        echo "Go Version:"
+        go version
+        echo "GOROOT:"
+        go env GOROOT
+
+    # Step 3: Install Dependencies
+    - name: Install Dependencies
+      run: go mod tidy
+
+    # Step 4: Run Tests
+    - name: Run Tests
+      run: go test ./... -v
+
+    # Step 5: Run Benchmarks
+    - name: Run Benchmarks
+      run: go test ./... -bench=. -benchmem
